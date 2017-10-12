@@ -11,77 +11,65 @@ $(document).ready(function(){
   firebase.initializeApp(config);
 
   //create firebase references
-  var Auth = firebase.auth();
+  var Auth = firebase.auth(); 
   var dbRef = firebase.database();
-  var contactsRef = dbRef.child('contacts')
-  var usersRef = dbRef.child('users')
+  var contactsRef = dbRef.ref('contacts')
+  var usersRef = dbRef.ref('users')
   var auth = null;
-
 
   //Register
   $('#doRegister').on('click', function (e) {
     e.preventDefault();
     $('#registerModal').modal('hide');
-    $('#messageModalLabel').html('<span class="text-center text-info"><i class="fa fa-cog fa-spin"></i></span>');
+    $('#messageModalLabel').html(spanText('<i class="fa fa-cog fa-spin"></i>', ['center', 'info']));
     $('#messageModal').modal('show');
-
-    if( $('#registerEmail').val() != '' && $('#registerPassword').val() != ''  && $('#registerConfirmPassword').val() != '' ){
-      if( $('#registerPassword').val() == $('#registerConfirmPassword').val() ){
+    var data = {
+      email: $('#registerEmail').val(), //get the email from Form
+      firstName: $('#registerFirstName').val(), // get firstName
+      lastName: $('#registerLastName').val(), // get lastName
+    };
+    var passwords = {
+      password : $('#registerPassword').val(), //get the pass from Form
+      cPassword : $('#registerConfirmPassword').val(), //get the confirmPass from Form
+    }
+    if( data.email != '' && passwords.password != ''  && passwords.cPassword != '' ){
+      if( passwords.password == passwords.cPassword ){
         //create the user
-        Auth.createUserWithEmailAndPassword(
-          $('#registerEmail').val(),
-          $('#registerPassword').val()
-        )
-        dbRef.createUser({
-          email    : $('#registerEmail').val(),
-          password : $('#registerPassword').val()
-        }, function(error, userData) {
-          if (error) {
-            console.log("Error creating user:", error);
-            $('#messageModalLabel').html('<span class="text-danger">ERROR: '+ error.code + '</span>')
-          } else {
+        
+        firebase.auth()
+          .createUserWithEmailAndPassword(data.email, passwords.password)
+          .then(function(user){
             //now user is needed to be logged in to save data
-            dbRef.authWithPassword({
-              email    : $('#registerEmail').val(),
-              password : $('#registerPassword').val()
-            }, function(error, authData) {
-              if (error) {
-                console.log("Login Failed!", error);
-                $('#messageModalLabel').html('<span class="text-danger">ERROR: '+ error.code + '</span>')
-              } else {
-                console.log("Authenticated successfully with payload:", authData);
-                auth  = authData;
-                //now saving the profile data
-                usersRef
-                  .child(userData.uid)
-                  .set({
-                      firstName    : $('#registerFirstName').val(),
-                      lastName    : $('#registerLastName').val(),
-                      email    : $('#registerEmail').val(),
-                    }, function(){
-                      console.log("User Information Saved:", userData.uid);
-                    })
-                $('#messageModalLabel').html('<span class="text-center text-success">Success!</span>')
-                //hide the modal automatically
-                setTimeout(  function () {
-                  $('#messageModal').modal('hide');
-                  $('.unauthenticated, .userAuth').toggleClass('unauthenticated').toggleClass('authenticated');
-                  contactsRef        
-                    .child(auth.uid)
-                    .on("child_added", function(snap) {
-                      console.log("added", snap.key(), snap.val());
-                      $('#contacts').append(contactHtmlFromObject(snap.val()));
-                    });
-                }, 500)
-              }
-            });
-            console.log("Successfully created user account with uid:", userData.uid);
-            $('#messageModalLabel').html('<span class="text-success">Successfully created user account!</span>')
-          }
-        });
+            console.log("Authenticated successfully with payload:", user);
+            auth = user;
+            //now saving the profile data
+            usersRef
+              .child(user.uid)
+              .set(data)
+              .then(function(){
+                console.log("User Information Saved:", user.uid);
+              })
+            $('#messageModalLabel').html(spanText('Success!', ['center', 'success']))
+            //hide the modal automatically
+            setTimeout(function() {
+              $('#messageModal').modal('hide');
+              $('.unauthenticated, .userAuth').toggleClass('unauthenticated').toggleClass('authenticated');
+              contactsRef.child(auth.uid)
+                .on("child_added", function(snap) {
+                  console.log("added", snap.key(), snap.val());
+                  $('#contacts').append(contactHtmlFromObject(snap.val()));
+                });
+            }, 500);
+            console.log("Successfully created user account with uid:", user.uid);
+            $('#messageModalLabel').html(spanText('Successfully created user account!', ['success']))
+          })
+          .catch(function(error){
+            console.log("Error creating user:", error);
+            $('#messageModalLabel').html(spanText('ERROR: '+error.code, ['danger']))
+          });
       } else {
         //password and confirm password didn't match
-        $('#messageModalLabel').html('<span class="text-danger">ERROR: Passwords didn\'t match</span>')
+        $('#messageModalLabel').html(spanText("ERROR: Passwords didn't match", ['danger']))
       }
     }  
   });
@@ -90,65 +78,63 @@ $(document).ready(function(){
   $('#doLogin').on('click', function (e) {
     e.preventDefault();
     $('#loginModal').modal('hide');
-    $('#messageModalLabel').html('<span class="text-center text-info"><i class="fa fa-cog fa-spin"></i></span>');
+    $('#messageModalLabel').html(spanText('<i class="fa fa-cog fa-spin"></i>', ['center', 'info']));
     $('#messageModal').modal('show');
 
     if( $('#loginEmail').val() != '' && $('#loginPassword').val() != '' ){
       //login the user
-      dbRef.authWithPassword({
-        email    : $('#loginEmail').val(),
-        password : $('#loginPassword').val()
-      }, function(error, authData) {
-        if (error) {
-          console.log("Login Failed!", error);
-          $('#messageModalLabel').html('<span class="text-danger">ERROR: '+ error.code + '</span>')
-        } else {
+      var data = {
+        email: $('#loginEmail').val(),
+        password: $('#loginPassword').val()
+      };
+      firebase.auth().signInWithEmailAndPassword(data.email, data.password)
+        .then(function(authData) {
           console.log("Authenticated successfully with payload:", authData);
-          auth  = authData;
-          $('#messageModalLabel').html('<span class="text-center text-success">Success!</span>')
-          setTimeout(  function () {
+          auth = authData;
+          $('#messageModalLabel').html(spanText('Success!', ['center', 'success']))
+          setTimeout(function () {
             $('#messageModal').modal('hide');
             $('.unauthenticated, .userAuth').toggleClass('unauthenticated').toggleClass('authenticated');
-            contactsRef        
-              .child(auth.uid)
+            contactsRef.child(auth.uid)
               .on("child_added", function(snap) {
                 console.log("added", snap.key(), snap.val());
                 $('#contacts').append(contactHtmlFromObject(snap.val()));
               });
           })
-        }
-      });
+        })
+        .catch(function(error) {
+          console.log("Login Failed!", error);
+          $('#messageModalLabel').html(spanText('ERROR: '+error.code, ['danger']))
+        });
     }
   });
 
   //save contact
   $('.addValue').on("click", function( event ) {  
-      event.preventDefault();
-      if( auth != null ){
-        if( $('#name').val() != '' || $('#email').val() != '' ){
-          contactsRef
-            .child(auth.uid)
-            .push({
-              name: $('#name').val(),
-              email: $('#email').val(),
-              location: {
-                city: $('#city').val(),
-                state: $('#state').val(),
-                zip: $('#zip').val()
-              }
-            })
-            document.contactForm.reset();
-        } else {
-          alert('Please fill atlease name or email!');
-        }
+    event.preventDefault();
+    if( auth != null ){
+      if( $('#name').val() != '' || $('#email').val() != '' ){
+        contactsRef.child(auth.uid)
+          .push({
+            name: $('#name').val(),
+            email: $('#email').val(),
+            location: {
+              city: $('#city').val(),
+              state: $('#state').val(),
+              zip: $('#zip').val()
+            }
+          })
+          document.contactForm.reset();
       } else {
-        //inform user to login
+        alert('Please fill at-lease name or email!');
       }
-    });
-  
+    } else {
+      //inform user to login
+    }
+  });
 })
  
-//prepare conatct object's HTML
+//prepare contact object's HTML
 function contactHtmlFromObject(contact){
   console.log( contact );
   var html = '';
@@ -156,13 +142,15 @@ function contactHtmlFromObject(contact){
     html += '<div>';
       html += '<p class="lead">'+contact.name+'</p>';
       html += '<p>'+contact.email+'</p>';
-      html += '<p><small title="'
-                +contact.location.zip+'">'
-                +contact.location.city
-                +', '
-                +contact.location.state
-                +'</small></p>';
+      html += '<p><small title="' + contact.location.zip+'">'
+            +contact.location.city + ', '
+            +contact.location.state + '</small></p>';
     html += '</div>';
   html += '</li>';
   return html;
+}
+
+function spanText(textStr, textClasses) {
+  var classNames = textClasses.map(c => 'text-'+c).join(' ');
+  return '<span class="'+classNames+'">'+ textStr + '</span>';
 }
