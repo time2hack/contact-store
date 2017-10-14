@@ -56,7 +56,7 @@ $(document).ready(function(){
               $('.unauthenticated, .userAuth').toggleClass('unauthenticated').toggleClass('authenticated');
               contactsRef.child(auth.uid)
                 .on("child_added", function(snap) {
-                  console.log("added", snap.key(), snap.val());
+                  console.log("added", snap.key, snap.val());
                   $('#contacts').append(contactHtmlFromObject(snap.val()));
                 });
             }, 500);
@@ -97,7 +97,7 @@ $(document).ready(function(){
             $('.unauthenticated, .userAuth').toggleClass('unauthenticated').toggleClass('authenticated');
             contactsRef.child(auth.uid)
               .on("child_added", function(snap) {
-                console.log("added", snap.key(), snap.val());
+                console.log("added", snap.key, snap.val());
                 $('#contacts').append(contactHtmlFromObject(snap.val()));
               });
           })
