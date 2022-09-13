@@ -5,15 +5,15 @@ header h1 {
 header + hr {
   margin: 10px 0;
 }
-#contacts p, 
-#contacts p.lead{
+#contacts p,
+#contacts p.lead {
   margin: 0;
 }
 .userAuth {
   display: block;
   margin: 20px 0 0;
 }
-.modal-header:last-child{
+.modal-header:last-child {
   border-bottom: 0;
 }
 .card {
@@ -31,7 +31,7 @@ header + hr {
   display: inline-block;
   margin: 0 0.5em;
 }
-.user-info img{
+.user-info img {
   display: inline-block;
   max-width: 2em;
 }
@@ -43,4 +43,18 @@ header + hr {
 .auth-true .unauthenticated,
 .auth-false .authenticated {
   display: none;
+}
+#contacts .contact {
+  width: 18rem;
+}
+.delete-button {
+  font-size: 0.8rem;
+  float: right;
+  margin-left: 0.5rem;
+  padding: 0.05rem 0.3rem;
+  border: 1px solid transparent;
+}
+.delete-button:hover {
+  box-shadow: 0 0 5px 3px rgba(100, 100, 100, 0.3x);
+  border: 1px solid #aaa;
 }
